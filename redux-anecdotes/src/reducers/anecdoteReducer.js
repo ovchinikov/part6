@@ -1,4 +1,4 @@
-import { createStore, combineReducers } from 'redux'
+import { createSlice } from '@reduxjs/toolkit'
 
 const anecdotesAtStart = [
   'If it hurts, do it more often',
@@ -21,59 +21,49 @@ const asObject = (anecdote) => {
 
 const initialState = anecdotesAtStart.map(asObject)
 
-const anecdotesReducer = (state = initialState, action) => {
-  if (action.type === 'VOTE') {
-    const id = action.data.id
-    const anecdoteToChage = state.find((a) => a.id === id)
-    const changedAnecdote = {
-      ...anecdoteToChage,
-      votes: anecdoteToChage.votes + 1,
-    }
-    return state.map((anecdote) =>
-      anecdote.id !== id ? anecdote : changedAnecdote,
-    )
-  } else if (action.type === 'NEW_ANECDOTE') {
-    return [...state, action.data]
-  }
-  return state
-}
-
-const voteFor = (id) => {
-  return {
-    type: 'VOTE',
-    data: { id },
-  }
-}
-
-const createAnecdote = (content) => {
-  return {
-    type: 'NEW_ANECDOTE',
-    data: {
-      content,
-      id: getId(),
-      votes: 0,
+const anecdoteSlice = createSlice({
+  name: 'anecdotes',
+  initialState,
+  reducers: {
+    createAnecdote(state, action) {
+      const anecdote = action.payload
+      state.push({
+        content: anecdote,
+        id: getId(),
+        votes: 0,
+      })
     },
-  }
-}
 
-const filterReducer = (state = '', action) => {
-  if (action.type === 'SET_FILTER') {
-    return action.data.filter
-  }
-  return state
-}
+    voteFor(state, action) {
+      console.log(JSON.parse(JSON.stringify(state)))
+      const id = action.payload.id
+      console.log('id', id)
+      const anecdoteToChange = state.find((a) => a.id === id)
+      console.log(
+        'anecdoteToChange',
+        JSON.parse(JSON.stringify(anecdoteToChange)),
+      )
+      const changedAnecdote = {
+        ...anecdoteToChange,
+        votes: anecdoteToChange.votes + 1,
+      }
+      return state.map((anecdote) =>
+        anecdote.id !== id ? anecdote : changedAnecdote,
+      )
+    },
 
-const filter = (filter) => {
-  return {
-    type: 'SET_FILTER',
-    data: { filter },
-  }
-}
+    filter(state = '', action) {
+      return state.filter((anecdote) =>
+        anecdote.content.toLowerCase().includes(action.payload.toLowerCase()),
+      )
+    },
 
-const reducer = combineReducers({
-  anecdotes: anecdotesReducer,
-  filter: filterReducer,
+    sort(state) {
+      return state.sort((a, b) => b.votes - a.votes)
+    },
+  },
 })
 
-const store = createStore(reducer)
-export { store, voteFor, createAnecdote, filter }
+export const { createAnecdote, voteFor, filter, sort } = anecdoteSlice.actions
+
+export default anecdoteSlice.reducer
