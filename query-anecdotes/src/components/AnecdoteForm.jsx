@@ -1,11 +1,17 @@
 import { useQueryClient, useMutation } from '@tanstack/react-query'
 import { createAnecdote } from '../requests'
+import { useContext } from 'react'
+import { context } from './NotificationContext'
 
 const AnecdoteForm = () => {
+  const [state, dispatch] = useContext(context)
   const queryClient = useQueryClient()
 
   const newAnecdoteMutation = useMutation({
     mutationFn: createAnecdote,
+    onError: (error) => {
+      dispatch({ type: 'error', message: error.response.data.error })
+    },
     onSuccess: (newAnecdote) => {
       const previousAnecdotes = queryClient.getQueryData(['anecdotes'])
       console.log(previousAnecdotes)
@@ -20,6 +26,7 @@ const AnecdoteForm = () => {
     const content = event.target.anecdote.value
     event.target.anecdote.value = ''
     newAnecdoteMutation.mutate({ content, votes: 0 })
+    dispatch({ type: 'success', message: `Created anecdote: ${content}` })
   }
 
   return (
